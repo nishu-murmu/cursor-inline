@@ -5,8 +5,8 @@ local state = require("ai-companion.state")
 local ui = require("ai-companion.ui")
 
 M.setup = function()
-  local ns_old_code = api.nvim_create_namespace("OldCodeHighlight")
-  local ns_new_code = api.nvim_create_namespace("NewCodeHighlight")
+  local ns_old_code = state.highlight.old_code.ns
+  local ns_new_code = state.highlight.new_code.ns
   api.nvim_create_autocmd("ModeChanged", {
     pattern = "n:[vV\22]",
     callback = function()
@@ -19,6 +19,7 @@ M.setup = function()
     callback = function()
       ui.close_inline_command()
       local lines = utils.get_visual_selection()
+      state.main_bufnr = api.nvim_get_current_buf()
       state.selected_text = table.concat(lines, "\n")
     end,
   })
@@ -33,7 +34,7 @@ M.setup = function()
 
   api.nvim_create_autocmd("BufWritePost", {
     callback = function()
-      local bufnr = api.nvim_get_current_buf()
+      local bufnr = state.main_bufnr
       local highlight = state.highlight
       if highlight.new_code.start_row and highlight.new_code.end_row then
         api.nvim_set_hl(0, state.highlight.old_code.hl_group, {

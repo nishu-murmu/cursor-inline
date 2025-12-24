@@ -5,25 +5,18 @@ local prompts = require("ai-companion.prompts")
 local config = require("ai-companion.config")
 local state = require("ai-companion.state")
 local highlight = state.highlight
-local function replace_visual_selection(lines)
-  if api.nvim_buf_is_valid(0) then
-    local start_row = vim.fn.line("'<") - 1
-    highlight.new_code.start_row = start_row
-    api.nvim_buf_set_lines(0, start_row, start_row, false, lines)
-  end
-end
 
-local function replace_visual_selection(lines)
-  if api.nvim_buf_is_valid(0) then
+local function insert_generated_code(lines)
+  local bufnr = state.main_bufnr or api.nvim_get_current_buf()
+  if api.nvim_buf_is_valid(bufnr) then
     local start_row = vim.fn.line("'<") - 1
-    P(highlight)
     highlight.new_code.start_row = start_row
-    api.nvim_buf_set_lines(0, start_row, start_row, false, lines)
+    api.nvim_buf_set_lines(bufnr, start_row, start_row, false, lines)
   end
 end
 
 local function get_visual_range()
-  local bufnr = 0
+  local bufnr = state.main_bufnr or api.nvim_get_current_buf()
   local start = vim.api.nvim_buf_get_mark(bufnr, "<")
   local finish = vim.api.nvim_buf_get_mark(bufnr, ">")
   local sr = start[1] - 1
@@ -31,9 +24,10 @@ local function get_visual_range()
   return sr, er
 end
 
-local function highlight_visual_selection()
-  local bufnr = 0
-  local ns = api.nvim_create_namespace("OldCodeHighlight")
+local function highlight_old_code()
+  local bufnr = state.main_bufnr or api.nvim_get_current_buf()
+  local ns = state.highlight.old_code.ns
+  api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
   highlight.old_code.start_row, highlight.old_code.end_row = get_visual_range()
   api.nvim_set_hl(0, state.highlight.old_code.hl_group, {
     bg = "#ea4859",
@@ -46,9 +40,13 @@ local function highlight_visual_selection()
   })
 end
 
-local function highlight_new_inserted_text()
-  local bufnr = 0
-  local ns = api.nvim_create_namespace("NewCodeHighlight")
+local function skip_old_code()
+
+end
+
+local function highlight_new_inserted_code()
+  local bufnr = state.main_bufnr or api.nvim_get_current_buf()
+  local ns = state.highlight.new_code.ns
   highlight.new_code.end_row = vim.api.nvim_buf_get_mark(bufnr, "<")[1]
   local start_row = highlight.new_code.start_row
   api.nvim_set_hl(0, state.highlight.new_code.hl_group, {
@@ -123,9 +121,9 @@ function M.get_response(input)
     table.remove(lines, 1)
     table.remove(lines, #lines)
     vim.schedule(function()
-      replace_visual_selection(lines)
-      highlight_new_inserted_text()
-      highlight_visual_selection()
+      insert_generated_code(lines)
+      highlight_new_inserted_code()
+      highlight_old_code()
     end)
   end)
 end

@@ -1,7 +1,9 @@
 local M = {}
 
 M.mappings = {
-  open_input = "<leader>e"
+  open_input = "<leader>e",
+  accept_response = "<leader>y",
+  deny_response = "<leader>n",
 }
 
 M.provider = {
