@@ -6,12 +6,7 @@ local config = require("ai-companion.config")
 
 local function open_input_callback()
   ui.close_inline_command()
-  vim.ui.input({ prompt = "Enter prompt:" }, function(input)
-    if input and input ~= "" then
-      core_api.get_response(input)
-      vim.cmd.stopinsert()
-    end
-  end)
+  core_api.get_response()
 end
 
 function M.setup()

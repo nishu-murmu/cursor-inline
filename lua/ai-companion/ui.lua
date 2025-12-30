@@ -2,6 +2,7 @@ local M = {}
 
 local api = vim.api
 local config = require("ai-companion.config")
+local state = require("ai-companion.state")
 
 local bufnr, win_id
 local input_overridden
@@ -9,7 +10,6 @@ local input_overridden
 local function override_vim_input()
   if input_overridden then return end
   input_overridden = true
-
   vim.ui.input = function(opts, on_confirm)
     opts = opts or {}
     local prompt = opts.prompt
@@ -18,7 +18,7 @@ local function override_vim_input()
     api.nvim_buf_set_lines(buf, 0, -1, false, { default })
     api.nvim_buf_set_option(buf, "modifiable", true)
 
-    local win = api.nvim_open_win(buf, true, {
+    local win_opts = {
       relative = "cursor",
       row = 0,
       col = 1,
@@ -28,7 +28,10 @@ local function override_vim_input()
       border = "rounded",
       title = prompt,
       title_pos = "left",
-    })
+    }
+
+    local win = api.nvim_open_win(buf, true, win_opts)
+
 
     local function confirm()
       local text = table.concat(api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
@@ -89,14 +92,18 @@ function M.open_post_response_commands(row, lines, width, zindex)
   api.nvim_buf_set_lines(bufnr, 0, -1, false, { lines })
 
   local win = api.nvim_open_win(bufnr, false, {
-    relative = "editor",
+    relative = "win",
     row = row,
+    win = 0,
     col = vim.o.columns - width,
     width = width,
     height = 1,
     style = "minimal",
     zindex = zindex,
+    focusable = false,
+    noautocmd = true,
   })
+  vim.api.nvim_win_set_option(win, 'winhl', 'Normal:Normal')
   return win
 end
 
