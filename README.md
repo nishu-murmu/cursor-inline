@@ -4,6 +4,9 @@
 
 Cursor-style inline AI editing for Neovim. Select code, describe the change, and get an inline, highlighted edit you can accept or reject—similar to Cursor’s inline workflow.
 
+https://github.com/user-attachments/assets/55e2a362-19bf-4813-a734-ca28a9916b16
+
+
 ## Features
 
 - Inline popup for AI edits, triggered from visual selection.
