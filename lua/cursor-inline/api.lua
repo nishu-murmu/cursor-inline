@@ -6,14 +6,15 @@ local config = require("cursor-inline.config")
 local state = require("cursor-inline.state")
 local utils = require("cursor-inline.utils")
 local highlight = state.highlight
-
 local function insert_generated_code(lines)
   local bufnr = utils.get_bufnr()
-  if not api.nvim_buf_is_valid(bufnr) then return end
-  local start_row = vim.fn.line("'<") - 1
-  highlight.new_code.start_row = start_row
-  api.nvim_buf_set_lines(bufnr, start_row, start_row, false, lines)
+  if api.nvim_buf_is_valid(bufnr) then
+    local start_row = vim.fn.line("'<") - 1
+    highlight.new_code.start_row = start_row
+    api.nvim_buf_set_lines(bufnr, start_row, start_row, false, lines)
+  end
 end
+
 
 local function get_visual_range()
   local bufnr = 0
@@ -127,23 +128,33 @@ local function run_curl_command(payload, api_key, url)
     end)
   end)
 end
-
 function M.get_response()
+  local provider = config.provider or {}
+  local api_key = vim.fn.getenv("OPENAI_API_KEY")
+  if not api_key or api_key == "" then
+    vim.notify("The " .. provider.name .. " API key is missing", vim.log.levels.ERROR)
+    vim.notify([[
+Please enter the API key securely:
+On Unix (Linux/macOS):
+  1. Add this line in your shell config file:
+     export OPENAI_API_KEY="sk-..."
+  2. Restart your terminal and Neovim.
+
+On Windows (Command Prompt):
+  1. Run:
+     setx OPENAI_API_KEY "sk-..."
+  2. Restart Command Prompt and Neovim.
+
+On Windows (PowerShell):
+  1. Run:
+     [System.Environment]::SetEnvironmentVariable("OPENAI_API_KEY", "sk-...", "User")
+  2. Restart PowerShell and Neovim.
+    ]])
+    return
+  end
   vim.ui.input({ prompt = "Enter prompt:" }, function(input)
     if input and input ~= "" then
       local payload = get_payload(input)
-      local provider = config.provider or {}
-      local api_key = utils.get_api_key()
-      if not api_key or api_key == "" then
-        vim.notify("The " .. provider.name .. "API key is missing", vim.log.levels.ERROR)
-        vim.ui.input({ prompt = "Enter " .. provider.name .. " API key:" }, function(key)
-          if key and key ~= "" then
-            utils.store_api_key(key)
-            M.get_response()
-          end
-        end)
-        return
-      end
       run_curl_command(payload, api_key, "https://api.openai.com/v1/responses")
     end
   end)

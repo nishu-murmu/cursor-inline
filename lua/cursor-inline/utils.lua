@@ -43,17 +43,6 @@ function M.get_bufnr()
   return state.main_bufnr or api.nvim_get_current_buf()
 end
 
-function M.store_api_key(key)
-  local path = vim.fn.stdpath("data") .. "openai_api_key.txt"
-  vim.fn.writefile({ key }, path)
-end
-
-function M.get_api_key()
-  local path = vim.fn.stdpath("data") .. "openai_api_key.txt"
-  if vim.fn.filereadable(path) == 1 then
-    return vim.fn.readfile(path)[1]
-  end
-end
 
 function M.get_code_region(type_)
   local ns = highlight[type_].ns
