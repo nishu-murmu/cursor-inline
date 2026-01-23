@@ -2,6 +2,7 @@ local M = {}
 
 local api = vim.api
 local config = require("cursor-inline.config")
+local state = require("cursor-inline.state")
 
 local bufnr, win_id
 local input_overridden
@@ -14,6 +15,7 @@ local function override_vim_input()
     local prompt = opts.prompt
     local default = opts.default or ""
     local buf = api.nvim_create_buf(false, true)
+    state.bufs.input = buf
     api.nvim_buf_set_lines(buf, 0, -1, false, { default })
     vim.api.nvim_set_option_value("modifiable", true, { buf = buf })
 
@@ -31,11 +33,13 @@ local function override_vim_input()
 
     local win = api.nvim_open_win(buf, true, win_opts)
 
+    local function close_input()
+      api.nvim_win_close(win, true)
+    end
 
     local function confirm()
       local text = table.concat(api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
-      api.nvim_win_close(win, true)
-      on_confirm(text ~= "" and text or nil)
+      on_confirm(text ~= "" and text or nil, { win_id = win, bufnr = buf }, close_input)
     end
 
     vim.keymap.set("i", "<CR>", confirm, { buffer = buf })
@@ -112,6 +116,70 @@ end
 
 function M.setup()
   override_vim_input()
+end
+
+local spinner_timer = nil
+local spinner_timeout = nil
+
+function M.start_spinner()
+  local spinner_frames = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" }
+  local spinner_index = 1
+  local floating_buf = state.bufs.input
+
+  -- Stop existing spinner if running
+  if spinner_timer then
+    spinner_timer:stop()
+    spinner_timer = nil
+    if floating_buf ~= nil then
+      vim.api.nvim_buf_clear_namespace(floating_buf, -1, 0, -1)
+    end
+  end
+
+  -- Create and start new spinner timer
+  spinner_timer = vim.loop.new_timer()
+  if spinner_timer == nil then return end
+  spinner_timer:start(0, 100, vim.schedule_wrap(function()
+    if not (floating_buf and vim.api.nvim_buf_is_valid(floating_buf)) then
+      return
+    end
+    local line = vim.api.nvim_buf_get_lines(floating_buf, 0, 1, false)[1] or ""
+    local first_char_end = vim.str_byteindex(line, "utf-32", 1, false) or 0
+    vim.api.nvim_buf_set_text(
+      floating_buf,
+      0,
+      0,
+      0,
+      first_char_end,
+      { spinner_frames[spinner_index] }
+    )
+    spinner_index = spinner_index % #spinner_frames + 1
+  end))
+
+  -- Set up timeout to stop spinner after 60 seconds
+  spinner_timeout = vim.loop.new_timer()
+  if spinner_timeout then
+    spinner_timeout:start(60000, 0, vim.schedule_wrap(function()
+      vim.schedule(function()
+        vim.notify("Request timed out after 60 seconds", vim.log.levels.WARN)
+        M.stop_spinner()
+      end)
+    end))
+  end
+end
+
+function M.stop_spinner()
+  if spinner_timer then
+    spinner_timer:stop()
+    spinner_timer = nil
+  end
+  if spinner_timeout then
+    spinner_timeout:stop()
+    spinner_timeout = nil
+  end
+  local floating_buf = state.bufs.input
+  if floating_buf ~= nil and vim.api.nvim_buf_is_valid(floating_buf) then
+    vim.api.nvim_buf_clear_namespace(floating_buf, -1, 0, -1)
+  end
 end
 
 return M

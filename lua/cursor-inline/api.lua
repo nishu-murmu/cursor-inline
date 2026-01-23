@@ -1,10 +1,10 @@
 local M = {}
 
 local api = vim.api
-local prompts = require("cursor-inline.prompts")
 local config = require("cursor-inline.config")
 local state = require("cursor-inline.state")
 local utils = require("cursor-inline.utils")
+local providers = require("cursor-inline.providers")
 local highlight = state.highlight
 
 local function insert_generated_code(lines)
@@ -76,47 +76,14 @@ local function reset_states()
   }
 end
 
-local function get_payload(input)
-  local instruction = input
-  local selected_text = state.selected_text
-  local prompt_text = instruction .. "\n below is the selected code, \n```" .. selected_text .. "```"
-  local model = config.provider.model or "gpt-4.1-mini"
-  local payload = vim.json.encode({
-    model = model,
-    input = {
-      { role = "system", content = prompts.system_prompt },
-      { role = "user",   content = prompt_text },
-    },
-  })
-  return payload
-end
-
-local function run_curl_command(payload, api_key, url)
-  vim.system({
-    "curl",
-    "-s",
-    "-X",
-    "POST",
-    "-H",
-    "Content-Type: application/json",
-    "-H",
-    "Authorization: Bearer " .. api_key,
-    "-d",
-    payload,
-    url
-  }, {
-    text = true,
-  }, function(res)
-    local data = vim.json.decode(res.stdout)
-    local response_code = data.output and data.output[1] and data.output[1].content and data.output[1].content[1] and
-        data.output[1].content[1].text
-    if not response_code then
-      vim.schedule(function()
-        vim.notify("Failed to parse OpenAI response", vim.log.levels.ERROR)
-      end)
-      return
-    end
+---@param input string
+---@param callback function(generated boolean)
+local function generate_response(input, callback)
+  callback("started")
+  ---@param response_code string
+  providers.get_current_provider_response(input, function(response_code)
     local lines = vim.split(response_code, "\n", { plain = true })
+    if #lines ~= 0 then callback("done") end
     table.remove(lines, 1)
     table.remove(lines, #lines)
     vim.schedule(function()
@@ -130,36 +97,46 @@ local function run_curl_command(payload, api_key, url)
     end)
   end)
 end
+
 function M.get_response()
   local provider = config.provider or {}
-  local api_key = vim.fn.getenv("OPENAI_API_KEY")
+  local api_key = vim.fn.getenv("CURSOR_INLINE_API_KEY")
   if api_key == vim.NIL or api_key == "" then
     vim.notify("The " .. provider.name .. " API key is missing", vim.log.levels.ERROR)
     vim.notify([[
 Please enter the API key securely:
 On Unix (Linux/macOS):
   1. Add this line in your shell config file:
-     export OPENAI_API_KEY="sk-..."
+     export CURSOR_INLINE_API_KEY="sk-..."
   2. Source the file:
      source .bashrc (or which ever rc file you have)
   2. Restart your terminal and Neovim.
 
 On Windows (Command Prompt):
   1. Run:
-     setx OPENAI_API_KEY "sk-..."
+     setx CURSOR_INLINE_API_KEY "sk-..."
   2. Restart Command Prompt and Neovim.
 
 On Windows (PowerShell):
   1. Run:
-     [System.Environment]::SetEnvironmentVariable("OPENAI_API_KEY", "sk-...", "User")
+     [System.Environment]::SetEnvironmentVariable("CURSOR_INLINE_API_KEY", "sk-...", "User")
   2. Restart PowerShell and Neovim.
     ]])
     return
   end
-  vim.ui.input({ prompt = "Enter prompt:" }, function(input)
+  ---@param input string
+  ---@param opts any
+  ---@param close_input function()
+  vim.ui.input({ prompt = "Enter prompt:" }, function(input, opts, close_input)
     if input and input ~= "" then
-      local payload = get_payload(input)
-      run_curl_command(payload, api_key, "https://api.openai.com/v1/responses")
+      generate_response(input, function(status)
+        if status == "started" then
+          api.nvim_buf_set_text(opts.bufnr, 0, 0, 0, 0, { " " })
+        end
+        if status == "done" then
+          close_input()
+        end
+      end)
     end
   end)
 end

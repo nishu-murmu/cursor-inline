@@ -90,7 +90,8 @@ Subsequent requests reuse the stored key. Be aware that this key is stored unenc
 
 ## TODOs
 
-- [ ] Integrate multiple AI providers
+- [x] Integrate multiple AI providers
+- [x] Adding spinner animations
 - [ ] Diff previews for edits
 - [ ] Streaming response support
 
