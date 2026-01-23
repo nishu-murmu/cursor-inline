@@ -65,9 +65,9 @@ Default configuration from `lua/cursor-inline/config.lua`:
 ```lua
 {
   mappings = {
-    open_input = "<leader>e",
-    accept_response = "<leader>y",
-    deny_response = "<leader>n",
+    open_input = "<Space>e",
+    accept_response = "<Space>y",
+    deny_response = "<Space>n",
   },
   provider = {
     name = "openai",

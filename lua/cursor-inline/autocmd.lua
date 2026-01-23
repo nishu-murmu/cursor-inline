@@ -1,6 +1,7 @@
 local M = {}
 local api = vim.api
 local utils = require("cursor-inline.utils")
+local config = require("cursor-inline.config")
 local state = require("cursor-inline.state")
 local ui = require("cursor-inline.ui")
 local core_api = require("cursor-inline.api")
@@ -11,14 +12,18 @@ M.setup = function()
   api.nvim_create_autocmd("ModeChanged", {
     pattern = "n:[vV\22]",
     callback = function()
-      ui.open_inline_command()
+      if config.mappings.show_inline_hint == true then
+        ui.open_inline_command()
+      end
     end,
   })
 
   api.nvim_create_autocmd("ModeChanged", {
     pattern = "[vV\22]:n",
     callback = function()
-      ui.close_inline_command()
+      if config.mappings.show_inline_hint == true then
+        ui.close_inline_command()
+      end
       local lines = utils.get_visual_selection()
       state.main_bufnr = api.nvim_get_current_buf()
       state.selected_text = table.concat(lines, "\n")
@@ -47,7 +52,7 @@ M.setup = function()
         -- Update helper visibility based on cursor position
         local in_new_code = cursor_pos >= new_sr + 1 and cursor_pos <= new_er + 1
         local helpers_visible = state.wins.accept ~= nil or state.wins.deny ~= nil
-        
+
         if in_new_code and not helpers_visible then
           vim.schedule(function()
             utils.open_helper_commands_ui()

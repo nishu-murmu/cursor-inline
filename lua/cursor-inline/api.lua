@@ -16,7 +16,6 @@ local function insert_generated_code(lines)
   end
 end
 
-
 local function get_visual_range()
   local bufnr = 0
   local start_mark = api.nvim_buf_get_mark(bufnr, "<")
@@ -26,7 +25,6 @@ local function get_visual_range()
   if start_bufnr ~= bufnr then return nil, nil end
   return start_row - 1, end_row - 1
 end
-
 
 local function highlight_old_code()
   local bufnr = utils.get_bufnr()
@@ -125,7 +123,9 @@ local function run_curl_command(payload, api_key, url)
       insert_generated_code(lines)
       highlight_old_code()
       highlight_new_inserted_code()
-      utils.open_helper_commands_ui()
+      if config.mappings.show_inline_hint == true then
+        utils.open_helper_commands_ui()
+      end
       vim.cmd("stopinsert")
     end)
   end)
