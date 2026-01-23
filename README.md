@@ -16,7 +16,11 @@ https://github.com/user-attachments/assets/55e2a362-19bf-4813-a734-ca28a9916b16
 
 - Neovim with support for `vim.system` (0.10+ is recommended).
 - `curl` available in your `PATH`.
-- An OpenAI API key with access to the configured model (default: `gpt-4.1-mini`).
+- An any Provider API key with access to the configured model.
+
+### Providers Available
+1. [OpenAI](https://platform.openai.com/docs/api-reference/authentication)
+2. [Anthropic](https://platform.claude.com/docs/en/api/overview)
 
 ## Installation
 
@@ -75,16 +79,6 @@ Default configuration from `lua/cursor-inline/config.lua`:
   },
 }
 ```
-
-## API key handling
-
-On the first request, if no API key is found, the plugin:
-
-- Notifies that the `<provider.name>` API key is missing.
-- Prompts you in Neovim for the key.
-- Stores the key in a file under your Neovim `stdpath("data")` directory (plain text).
-
-Subsequent requests reuse the stored key. Be aware that this key is stored unencrypted on your machine.
 
 ---
 
