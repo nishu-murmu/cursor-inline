@@ -3,11 +3,11 @@ local config = require("cursor-inline.config")
 local prompts = require("cursor-inline.prompts")
 local state = require("cursor-inline.state")
 local ui = require("cursor-inline.ui")
-local api_key = vim.fn.getenv("CURSOR_INLINE_API_KEY")
 
 ---@param input string
 ---@param on_response function(text string)
 local function openai_curl_command(input, on_response)
+  local api_key = config.provider.name == "openai" and vim.fn.getenv("OPENAI_API_KEY")
   local payload = vim.json.encode({
     model = config.provider.model or "gpt-4.1-mini",
     input = {
@@ -46,7 +46,6 @@ local function openai_curl_command(input, on_response)
       end)
       return
     end
-
     vim.schedule(function()
       on_response(response_code)
     end)
@@ -57,15 +56,16 @@ end
 ---@param input string
 ---@param on_response function(text string)
 local function anthropic_curl_command(input, on_response)
+  local api_key = config.provider.name == "anthropic" and vim.fn.getenv("ANTHROPIC_API_KEY")
   local payload = vim.json.encode({
-    model = config.provider.model or "claude-sonnet-4-5",
-    max_tokens = "1024",
+    model = config.provider.model or "claude-sonnet-4-5-20250929",
+    max_tokens = 1024,
+    system = prompts.system_prompt,
     messages = {
-      { role = "system", content = prompts.system_prompt },
-      { role = "user",   content = input },
+      { role = "user", content = input },
     },
   })
-local command = {
+  local command = {
     "curl",
     "-s",
     "-X",
@@ -97,7 +97,6 @@ local command = {
       end)
       return
     end
-
     vim.schedule(function()
       on_response(response_code)
     end)

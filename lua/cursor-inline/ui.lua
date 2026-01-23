@@ -6,6 +6,8 @@ local state = require("cursor-inline.state")
 
 local bufnr, win_id
 local input_overridden
+local spinner_timer = nil
+local spinner_timeout = nil
 
 local function override_vim_input()
   if input_overridden then return end
@@ -117,9 +119,6 @@ end
 function M.setup()
   override_vim_input()
 end
-
-local spinner_timer = nil
-local spinner_timeout = nil
 
 function M.start_spinner()
   local spinner_frames = { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" }

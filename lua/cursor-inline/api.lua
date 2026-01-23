@@ -9,11 +9,12 @@ local highlight = state.highlight
 
 local function insert_generated_code(lines)
   local bufnr = utils.get_bufnr()
-  if api.nvim_buf_is_valid(bufnr) then
-    local start_row = vim.fn.line("'<") - 1
-    highlight.new_code.start_row = start_row
-    api.nvim_buf_set_lines(bufnr, start_row, start_row, false, lines)
+  if not api.nvim_buf_is_valid(bufnr) then
+    return
   end
+  local start_row = vim.fn.line("'<") - 1
+  highlight.new_code.start_row = start_row
+  api.nvim_buf_set_lines(bufnr, start_row, start_row, false, lines)
 end
 
 local function get_visual_range()
@@ -100,28 +101,31 @@ end
 
 function M.get_response()
   local provider = config.provider or {}
-  local api_key = vim.fn.getenv("CURSOR_INLINE_API_KEY")
+  local api_key = config.provider.name == "openai" and vim.fn.getenv("OPENAI_API_KEY") or
+      provider.name == "anthropic" and vim.fn.getenv("ANTHROPIC_API_KEY")
+  local api_key_name = config.provider.name == "openai" and "OPENAI_API_KEY" or
+      provider.name == "anthropic" and "ANTHROPIC_API_KEY"
   if api_key == vim.NIL or api_key == "" then
     vim.notify("The " .. provider.name .. " API key is missing", vim.log.levels.ERROR)
-    vim.notify([[
+    vim.notify(string.format([[
 Please enter the API key securely:
 On Unix (Linux/macOS):
   1. Add this line in your shell config file:
-     export CURSOR_INLINE_API_KEY="sk-..."
+     export %s="<api-key>"
   2. Source the file:
      source .bashrc (or which ever rc file you have)
   2. Restart your terminal and Neovim.
 
 On Windows (Command Prompt):
   1. Run:
-     setx CURSOR_INLINE_API_KEY "sk-..."
+     setx %s "<api-key>"
   2. Restart Command Prompt and Neovim.
 
 On Windows (PowerShell):
   1. Run:
-     [System.Environment]::SetEnvironmentVariable("CURSOR_INLINE_API_KEY", "sk-...", "User")
+     [System.Environment]::SetEnvironmentVariable("%s", "<api-key>", "User")
   2. Restart PowerShell and Neovim.
-    ]])
+    ]], api_key_name, api_key_name, api_key_name))
     return
   end
   ---@param input string
