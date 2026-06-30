@@ -12,6 +12,8 @@ function M.get_response()
 		core_utils.api_key_missing_notification()
 		return
 	end
+
+  ---@diagnostic disable
 	vim.ui.input({ prompt = "Enter prompt:" }, function(input, cb)
 		if input and input ~= "" then
 			providers.get_current_provider_response(input, function(response_code)
