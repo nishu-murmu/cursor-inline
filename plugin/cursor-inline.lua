@@ -1,12 +1,12 @@
-if vim.g.loaded_ai_companion then
+if vim.g.loaded_cursor_inline then
   return
 end
 
-vim.g.loaded_ai_companion = true
+vim.g.loaded_cursor_inline = true
 
-local ok, ai_companion = pcall(require, "cursor-inline")
+local ok, cursor_inline = pcall(require, "cursor-inline")
 if not ok then
   return
 end
 
-ai_companion.setup()
+cursor_inline.setup()

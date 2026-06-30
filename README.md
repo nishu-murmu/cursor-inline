@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/55e2a362-19bf-4813-a734-ca28a9916b16
 
 - Neovim with support for `vim.system` (0.10+ is recommended).
 - `curl` available in your `PATH`.
-- An OpenAI API key with access to the configured model (default: `gpt-4.1-mini`).
+- An OpenAI API key with access to the configured model (default: `gpt-5.4-mini`).
 
 ## Installation
 
@@ -71,7 +71,7 @@ Default configuration from `lua/cursor-inline/config.lua`:
   },
   provider = {
     name = "openai",
-    model = "gpt-4.1-mini",
+    model = "gpt-5.4-mini",
   },
 }
 ```

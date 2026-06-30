@@ -1,14 +1,14 @@
 local M = {}
 
 M.mappings = {
-  open_input = "<leader>e",
-  accept_response = "<leader>y",
-  deny_response = "<leader>n",
+  open_input = "<Space>e",
+  accept_response = "<Space>y",
+  deny_response = "<Space>n",
 }
 
 M.provider = {
   name = "openai",
-  model = "gpt-4.1-mini",
+  model = "gpt-5.4-mini",
 }
 
 M.setup = function(opts)

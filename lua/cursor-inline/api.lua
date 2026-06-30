@@ -9,13 +9,12 @@ local highlight = state.highlight
 
 local function insert_generated_code(lines)
   local bufnr = utils.get_bufnr()
-  if api.nvim_buf_is_valid(bufnr) then
-    local start_row = vim.fn.line("'<") - 1
-    highlight.new_code.start_row = start_row
-    api.nvim_buf_set_lines(bufnr, start_row, start_row, false, lines)
-  end
-end
+  if not api.nvim_buf_is_valid(bufnr) then return end
 
+  local start_row = vim.fn.line("'<") - 1
+  highlight.new_code.start_row = start_row
+  api.nvim_buf_set_lines(bufnr, start_row, start_row, false, lines)
+end
 
 local function get_visual_range()
   local bufnr = 0
@@ -26,7 +25,6 @@ local function get_visual_range()
   if start_bufnr ~= bufnr then return nil, nil end
   return start_row - 1, end_row - 1
 end
-
 
 local function highlight_old_code()
   local bufnr = utils.get_bufnr()
@@ -41,7 +39,6 @@ local function highlight_old_code()
     hl_group = highlight.old_code.hl_group,
     hl_eol = true,
   })
-  api.nvim_buf_set_lines(bufnr, highlight.old_code.end_row + 1, highlight.old_code.end_row + 1, false, { "" })
 end
 
 local function highlight_new_inserted_code()
@@ -82,7 +79,7 @@ local function get_payload(input)
   local instruction = input
   local selected_text = state.selected_text
   local prompt_text = instruction .. "\n below is the selected code, \n```" .. selected_text .. "```"
-  local model = config.provider.model or "gpt-4.1-mini"
+  local model = config.provider.model or "gpt-5.4-mini"
   local payload = vim.json.encode({
     model = model,
     input = {
@@ -110,11 +107,19 @@ local function run_curl_command(payload, api_key, url)
     text = true,
   }, function(res)
     local data = vim.json.decode(res.stdout)
+    if (type(data.error) == "table" and data.error and data.error.message) then
+      vim.schedule(function()
+        vim.notify("Failed to parse OpenAI response: " .. data.error.message, vim.log.levels.ERROR)
+        vim.cmd("stopinsert")
+      end)
+      return
+    end
     local response_code = data.output and data.output[1] and data.output[1].content and data.output[1].content[1] and
         data.output[1].content[1].text
     if not response_code then
       vim.schedule(function()
-        vim.notify("Failed to parse OpenAI response", vim.log.levels.ERROR)
+        vim.notify("Testing Failed to parse OpenAI response", vim.log.levels.ERROR)
+        vim.cmd("stopinsert")
       end)
       return
     end
