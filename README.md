@@ -27,6 +27,7 @@ Use your favorite plugin manager. Examples below assume the repository path is `
 ```lua
 {
   "nishu-murmu/cursor-inline",
+  event = "BufReadPost",
   config = function()
     require("cursor-inline").setup()
   end,
