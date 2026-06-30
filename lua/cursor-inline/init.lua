@@ -6,10 +6,10 @@ local autocmd = require("cursor-inline.autocmd")
 local M = {}
 
 function M.setup(opts)
-  config.setup(opts or {})
-  ui.setup()
-  autocmd.setup()
-  base.setup()
+	config.setup(opts or {})
+	ui.setup()
+	autocmd.setup()
+	base.setup()
 end
 
 return M
