@@ -4,6 +4,7 @@ M.mappings = {
   open_input = "<Space>e",
   accept_response = "<Space>y",
   deny_response = "<Space>n",
+  show_inline_hint = true
 }
 
 M.provider = {

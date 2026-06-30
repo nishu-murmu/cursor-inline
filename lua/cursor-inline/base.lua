@@ -5,14 +5,16 @@ local core_api = require("cursor-inline.api")
 local config = require("cursor-inline.config")
 
 local function open_input_callback()
-  ui.close_inline_command()
+  if config.mappings.accept_response == true then
+    ui.close_inline_command()
+  end
   core_api.get_response()
 end
 
 function M.setup()
   local keymaps = {
-    { "v", config.mappings.open_input, open_input_callback, "Opening the input prompt." },
-    { "n", config.mappings.deny_response, core_api.reject_api_response, "Declining the API response." },
+    { "v", config.mappings.open_input,      open_input_callback,          "Opening the input prompt." },
+    { "n", config.mappings.deny_response,   core_api.reject_api_response, "Declining the API response." },
     { "n", config.mappings.accept_response, core_api.accept_api_response, "Accepting the API response." },
   }
 

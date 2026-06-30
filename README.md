@@ -18,6 +18,11 @@ https://github.com/user-attachments/assets/55e2a362-19bf-4813-a734-ca28a9916b16
 - `curl` available in your `PATH`.
 - An OpenAI API key with access to the configured model (default: `gpt-5.4-mini`).
 
+
+### Providers Available
+1. [OpenAI](https://platform.openai.com/docs/api-reference/authentication)
+2. [Anthropic](https://platform.claude.com/docs/en/api/overview)
+
 ## Installation
 
 Use your favorite plugin manager. Examples below assume the repository path is `nishu-murmu/cursor-inline` – adjust if your repo is named differently.
@@ -66,9 +71,9 @@ Default configuration from `lua/cursor-inline/config.lua`:
 ```lua
 {
   mappings = {
-    open_input = "<leader>e",
-    accept_response = "<leader>y",
-    deny_response = "<leader>n",
+    open_input = "<Space>e",
+    accept_response = "<Space>y",
+    deny_response = "<Space>n",
   },
   provider = {
     name = "openai",
@@ -77,21 +82,12 @@ Default configuration from `lua/cursor-inline/config.lua`:
 }
 ```
 
-## API key handling
-
-On the first request, if no API key is found, the plugin:
-
-- Notifies that the `<provider.name>` API key is missing.
-- Prompts you in Neovim for the key.
-- Stores the key in a file under your Neovim `stdpath("data")` directory (plain text).
-
-Subsequent requests reuse the stored key. Be aware that this key is stored unencrypted on your machine.
-
 ---
 
 ## TODOs
 
-- [ ] Integrate multiple AI providers
+- [x] Integrate multiple AI providers
+- [x] Adding spinner animations
 - [ ] Diff previews for edits
 - [ ] Streaming response support
 

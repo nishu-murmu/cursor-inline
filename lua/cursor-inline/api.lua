@@ -1,10 +1,10 @@
 local M = {}
 
 local api = vim.api
-local prompts = require("cursor-inline.prompts")
 local config = require("cursor-inline.config")
 local state = require("cursor-inline.state")
 local utils = require("cursor-inline.utils")
+local providers = require("cursor-inline.providers")
 local highlight = state.highlight
 
 local function insert_generated_code(lines)
@@ -124,47 +124,63 @@ local function run_curl_command(payload, api_key, url)
       return
     end
     local lines = vim.split(response_code, "\n", { plain = true })
+    if #lines ~= 0 then callback("done") end
     table.remove(lines, 1)
     table.remove(lines, #lines)
     vim.schedule(function()
       insert_generated_code(lines)
       highlight_old_code()
       highlight_new_inserted_code()
-      utils.open_helper_commands_ui()
+      if config.mappings.show_inline_hint == true then
+        utils.open_helper_commands_ui()
+      end
       vim.cmd("stopinsert")
     end)
   end)
 end
+
 function M.get_response()
   local provider = config.provider or {}
-  local api_key = vim.fn.getenv("OPENAI_API_KEY")
+  local api_key = config.provider.name == "openai" and vim.fn.getenv("OPENAI_API_KEY") or
+      provider.name == "anthropic" and vim.fn.getenv("ANTHROPIC_API_KEY")
+  local api_key_name = config.provider.name == "openai" and "OPENAI_API_KEY" or
+      provider.name == "anthropic" and "ANTHROPIC_API_KEY"
   if api_key == vim.NIL or api_key == "" then
     vim.notify("The " .. provider.name .. " API key is missing", vim.log.levels.ERROR)
-    vim.notify([[
+    vim.notify(string.format([[
 Please enter the API key securely:
 On Unix (Linux/macOS):
   1. Add this line in your shell config file:
-     export OPENAI_API_KEY="sk-..."
+     export %s="<api-key>"
   2. Source the file:
      source .bashrc (or which ever rc file you have)
   2. Restart your terminal and Neovim.
 
 On Windows (Command Prompt):
   1. Run:
-     setx OPENAI_API_KEY "sk-..."
+     setx %s "<api-key>"
   2. Restart Command Prompt and Neovim.
 
 On Windows (PowerShell):
   1. Run:
-     [System.Environment]::SetEnvironmentVariable("OPENAI_API_KEY", "sk-...", "User")
+     [System.Environment]::SetEnvironmentVariable("%s", "<api-key>", "User")
   2. Restart PowerShell and Neovim.
-    ]])
+    ]], api_key_name, api_key_name, api_key_name))
     return
   end
-  vim.ui.input({ prompt = "Enter prompt:" }, function(input)
+  ---@param input string
+  ---@param opts any
+  ---@param close_input function()
+  vim.ui.input({ prompt = "Enter prompt:" }, function(input, opts, close_input)
     if input and input ~= "" then
-      local payload = get_payload(input)
-      run_curl_command(payload, api_key, "https://api.openai.com/v1/responses")
+      generate_response(input, function(status)
+        if status == "started" then
+          api.nvim_buf_set_text(opts.bufnr, 0, 0, 0, 0, { " " })
+        end
+        if status == "done" then
+          close_input()
+        end
+      end)
     end
   end)
 end
