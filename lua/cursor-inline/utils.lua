@@ -12,6 +12,8 @@ function M.get_visual_selection()
   local finish = api.nvim_buf_get_mark(bufnr, ">")
   local start_row, start_col = start[1], start[2]
   local end_row, end_col = finish[1], finish[2]
+  highlight.new_code.start_row = start_row
+  highlight.new_code.end_row = end_row
   if start_row > end_row or (start_row == end_row and start_col > end_col) then
     start_row, end_row = end_row, start_row
     start_col, end_col = end_col, start_col
@@ -42,7 +44,6 @@ end
 function M.get_bufnr()
   return state.main_bufnr or api.nvim_get_current_buf()
 end
-
 
 function M.get_code_region(type_)
   local ns = highlight[type_].ns

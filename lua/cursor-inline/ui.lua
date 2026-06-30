@@ -41,13 +41,16 @@ local function override_vim_input()
 
     local function confirm()
       local text = table.concat(api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
-      on_confirm(text ~= "" and text or nil, { win_id = win, bufnr = buf }, close_input)
+      on_confirm(text ~= "" and text or nil, function(response)
+        if(response) then close_input() end 
+      end)
     end
 
     vim.keymap.set("i", "<CR>", confirm, { buffer = buf })
     vim.keymap.set("i", "<Esc>", function()
       api.nvim_win_close(win, true)
-      on_confirm(nil)
+      on_confirm(nil, nil)
+      close_input()
       vim.cmd("stopinsert")
     end, { buffer = buf })
     vim.cmd("startinsert")
@@ -170,10 +173,6 @@ function M.stop_spinner()
   if spinner_timer then
     spinner_timer:stop()
     spinner_timer = nil
-  end
-  if spinner_timeout then
-    spinner_timeout:stop()
-    spinner_timeout = nil
   end
   local floating_buf = state.bufs.input
   if floating_buf ~= nil and vim.api.nvim_buf_is_valid(floating_buf) then

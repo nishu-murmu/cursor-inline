@@ -1,21 +1,21 @@
 local M = {}
 
 local ui = require("cursor-inline.ui")
-local core_api = require("cursor-inline.api")
+local api = require("cursor-inline.core.api")
 local config = require("cursor-inline.config")
 
 local function open_input_callback()
   if config.mappings.accept_response == true then
     ui.close_inline_command()
   end
-  core_api.get_response()
+  api.get_response()
 end
 
 function M.setup()
   local keymaps = {
     { "v", config.mappings.open_input,      open_input_callback,          "Opening the input prompt." },
-    { "n", config.mappings.deny_response,   core_api.reject_api_response, "Declining the API response." },
-    { "n", config.mappings.accept_response, core_api.accept_api_response, "Accepting the API response." },
+    { "n", config.mappings.deny_response,   api.reject_api_response, "Declining the API response." },
+    { "n", config.mappings.accept_response, api.accept_api_response, "Accepting the API response." },
   }
 
   for _, map in ipairs(keymaps) do

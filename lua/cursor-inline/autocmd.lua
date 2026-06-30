@@ -4,7 +4,6 @@ local utils = require("cursor-inline.utils")
 local config = require("cursor-inline.config")
 local state = require("cursor-inline.state")
 local ui = require("cursor-inline.ui")
-local core_api = require("cursor-inline.api")
 
 M.setup = function()
   local ns_old_code = state.highlight.old_code.ns
@@ -32,10 +31,9 @@ M.setup = function()
 
   api.nvim_create_autocmd("CursorMoved", {
     callback = function()
-      if vim.fn.mode():match("n") then
-        local old_sr, old_er = core_api.get_old_code_region()
-        local new_sr, new_er = core_api.get_new_code_region()
-
+      if vim.fn.mode():match("n") then 
+        local old_sr, old_er = utils.get_code_region("old_code")
+        local new_sr, new_er = utils.get_code_region("new_code")
         if old_er == nil and old_sr == nil then return end
         local cursor_pos = api.nvim_win_get_cursor(0)[1]
         if old_sr == cursor_pos then
