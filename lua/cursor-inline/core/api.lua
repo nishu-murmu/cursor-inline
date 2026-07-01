@@ -7,12 +7,6 @@ local core_utils = require("cursor-inline.core.utils")
 local utils = require("cursor-inline.utils")
 
 function M.get_response()
-  local api_key = vim.fn.getenv("OPENAI_API_KEY")
-  if api_key == vim.NIL or api_key == "" then
-    core_utils.api_key_missing_notification()
-    return
-  end
-
   ---@diagnostic disable
   vim.ui.input({ prompt = "Enter prompt:" }, function(input, cb)
     if input and input ~= "" then

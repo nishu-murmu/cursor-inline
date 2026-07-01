@@ -71,28 +71,31 @@ function M.reset_states()
   }
 end
 
-function M.api_key_missing_notification()
+---@alias ProviderType "openai"|"anthropic"
+---@param provider ProviderType
+function M.api_key_missing_notification(provider)
   ---@diagnostic disable
-  vim.notify("The " .. provider.name .. " API key is missing", vim.log.levels.ERROR)
-  vim.notify([[
+  vim.notify("The " .. provider .. " API key is missing", vim.log.levels.ERROR)
+  local formatted_message = string.format([[
 Please enter the API key securely:
 On Unix (Linux/macOS):
   1. Add this line in your shell config file:
-     export OPENAI_API_KEY="sk-..."
+     export %s="<API_KEY>"
   2. Source the file:
      source .bashrc (or which ever rc file you have)
   2. Restart your terminal and Neovim.
 
 On Windows (Command Prompt):
   1. Run:
-     setx OPENAI_API_KEY "sk-..."
+     setx %s "<API_KEY>"
   2. Restart Command Prompt and Neovim.
 
 On Windows (PowerShell):
   1. Run:
-     [System.Environment]::SetEnvironmentVariable("OPENAI_API_KEY", "sk-...", "User")
+     [System.Environment]::SetEnvironmentVariable("%s", "<API_KEY>", "User")
   2. Restart PowerShell and Neovim.
-    ]])
+    ]], provider == "openai" and "OPENAI_API_KEY" or provider == "anthropic" and "ANTHROPIC_API_KEY" or "")
+  vim.notify(formatted_message)
 end
 
 function M.on_response_handler(response_code, cb)
